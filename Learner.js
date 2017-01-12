@@ -43,11 +43,11 @@ Learn.init = function (gameManip, ui, genomeUnits, selection, mutationProb) {
 Learn.startLearning = function () {
 
   // Build genomes if needed
-  while (Learn.genomes.length < Learn.genomeUnits) {
-    Learn.genomes.push(Learn.buildGenome(3, 1));
+  while (Learn.genomes.length < Learn.genomeUnits) { //we are building genomes.
+    Learn.genomes.push(Learn.buildGenome(3, 1));  // 3 is the no of ip 1 is the no of op
   }
 
-  Learn.executeGeneration();
+  Learn.executeGeneration(); 
   
 }
 
@@ -68,8 +68,7 @@ Learn.executeGeneration = function (){
   Learn.generation++;
   Learn.ui.logger.log('Executing generation '+Learn.generation);
 
-  Learn.genome = 0;
-
+  Learn.genome = 0; // we are just starting with the first one ...
   async.mapSeries(Learn.genomes, Learn.executeGenome, function (argument) {
 
     // Kill worst genomes
@@ -225,7 +224,11 @@ Learn.loadGenomes = function (genomes, deleteOthers){
 Learn.buildGenome = function (inputs, outputs) {
   Learn.ui.logger.log('Build genome '+(Learn.genomes.length+1));
 
-  var network = new Architect.Perceptron(inputs, 4, 4, outputs);
+  var network = new Architect.Perceptron(inputs, 4, 4, outputs); // its making the NN ... 4 ,4 is the hidden layer...
+
+  // first argument is the input , last is the op , all in between are the hidden layer.
+  //3 layers are sufficient enough .... otherwise computation time and complexity will also increase .	
+
 
   return network;
 }
