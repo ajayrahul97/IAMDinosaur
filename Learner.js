@@ -44,18 +44,18 @@ Learn.startLearning = function () {
 
   // Build genomes if needed
   while (Learn.genomes.length < Learn.genomeUnits) { //we are building genomes.
-    Learn.genomes.push(Learn.buildGenome(3, 1));  // 3 is the no of ip 1 is the no of op
+    Learn.genomes.push(Learn.buildGenome(9, 1));  // 9is the no of i/p , 1 is the no of o/p  //Note:  we are adding 6 more sensors
   }
 
-  Learn.executeGeneration(); 
-  
+  Learn.executeGeneration();
+
 }
 
 
 // Given the entire generation of genomes (An array),
 // applyes method `executeGenome` for each element.
 // After all elements have completed executing:
-// 
+//
 // 1) Select best genomes
 // 2) Does cross over (except for 2 genomes)
 // 3) Does Mutation-only on remaining genomes
@@ -155,6 +155,12 @@ Learn.executeGenome = function (genome, next){
         Learn.gm.sensors[0].value,
         Learn.gm.sensors[0].size,
         Learn.gm.sensors[0].speed,
+        Learn.gm.sensors[1].value,    // NOTE : added 6 more sensors..
+        Learn.gm.sensors[1].size,
+        Learn.gm.sensors[1].speed,
+        Learn.gm.sensors[2].value,
+        Learn.gm.sensors[2].size,
+        Learn.gm.sensors[2].speed,
       ];
       // console.log(inputs);
       // Apply to network
@@ -170,6 +176,7 @@ Learn.executeGenome = function (genome, next){
       // Save Genome fitness
       genome.fitness = points;
 
+
       // Go to next genome
       next();
     }
@@ -182,7 +189,7 @@ Learn.executeGenome = function (genome, next){
 // If genome only keeps a single activation value for any given input,
 // it will return false
 Learn.checkExperience = function (genome) {
-  
+
   var step = 0.1, start = 0.0, stop = 1;
 
   // Inputs are default. We only want to test the first index
@@ -194,7 +201,7 @@ Learn.checkExperience = function (genome) {
 
     activation = genome.activate(inputs);
     state = Learn.gm.getDiscreteState(activation);
-    
+
     outputs[state] = true;
   }
 
@@ -219,7 +226,7 @@ Learn.loadGenomes = function (genomes, deleteOthers){
 }
 
 
-// Builds a new genome based on the 
+// Builds a new genome based on the
 // expected number of inputs and outputs
 Learn.buildGenome = function (inputs, outputs) {
   Learn.ui.logger.log('Build genome '+(Learn.genomes.length+1));
@@ -227,7 +234,7 @@ Learn.buildGenome = function (inputs, outputs) {
   var network = new Architect.Perceptron(inputs, 4, 4, outputs); // its making the NN ... 4 ,4 is the hidden layer...
 
   // first argument is the input , last is the op , all in between are the hidden layer.
-  //3 layers are sufficient enough .... otherwise computation time and complexity will also increase .	
+  //3 layers are sufficient enough .... otherwise computation time and complexity will also increase .
 
 
   return network;
@@ -250,6 +257,9 @@ Learn.crossOver = function (netA, netB) {
 
   // Cross over data keys
   Learn.crossOverDataKey(netA.neurons, netB.neurons, 'bias');
+  //Note : crossing over the weights as well..
+  Learn.crossOverDataKey(netA.neurons, netB.neurons, 'weight');
+
 
   return netA;
 }
@@ -262,7 +272,7 @@ Learn.crossOver = function (netA, netB) {
 Learn.mutate = function (net){
   // Mutate
   Learn.mutateDataKeys(net.neurons, 'bias', Learn.mutationProb);
-  
+
   Learn.mutateDataKeys(net.connections, 'weight', Learn.mutationProb);
 
   return net;
@@ -271,7 +281,7 @@ Learn.mutate = function (net){
 
 // Given an Object A and an object B, both Arrays
 // of Objects:
-// 
+//
 // 1) Select a cross over point (cutLocation)
 //    randomly (going from 0 to A.length)
 // 2) Swap values from `key` one to another,

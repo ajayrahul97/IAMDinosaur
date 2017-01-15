@@ -37,7 +37,7 @@ var GameManipulator = {
       lastValue: 1,
 
       value: null,
-      offset: [84, -15], // 64,-15
+      offset: [69,-15], // 64,-15
       step: [4, 0],
       length: 0.3,
 
@@ -49,6 +49,57 @@ var GameManipulator = {
       size: 0,
       computeSize: true,
     },
+    {
+      lastValue:1, // sensor 2 : for detecting the cacti/pterodactyl, that is at the head level.
+
+      value:null,
+      offset:[69,-40], // this point is somwhere near the head of the dinosaur;
+      step: [4,0], // step size can be reduced...
+      length: 0.3,
+
+      //Speed
+      speed: 0,
+      lastComputeSpeed: 0,
+
+      //Computes the size of the object
+      size : 0,
+      computeSize: true,
+    },
+    {
+      lastValue:1, // sensor 3 : for detecting the pterodactyl, that is above the head level.
+
+      value:null,
+      offset:[69,-60], // this point is somwhere near the head of the dinosaur;
+      step: [4,0], // step size can be reduced...
+      length: 0.3,
+
+      //Speed
+      speed: 0,
+      lastComputeSpeed: 0,
+
+      //Computes the size of the object
+      size : 0,
+      computeSize: true,
+    },
+    // {
+    //   lastValue:1, // sensor 4 : for detecting the second obstacle/
+    //
+    //   value:null,
+    //   offset:[69,-40], // this point is somwhere near the head of the dinosaur;
+    //   step: [4,0], // step size can be reduced...
+    //   length: 0.3,
+    //
+    //   //Speed
+    //   speed: 0,
+    //   lastComputeSpeed: 0,
+    //
+    //   //Computes the size of the object
+    //   size : 0,
+    //   computeSize: true,
+    // },
+    //
+
+
   ]
 };
 
@@ -74,6 +125,8 @@ GameManipulator.findGamePosition = function () {
       break;
     }
   }
+  robot.moveMouse(dinoPos[0],dinoPos[1]);
+
 
   if (!dinoPos) {
     return null;
@@ -165,14 +218,19 @@ GameManipulator.readGameState = function () {
 
     // Clear keys
     GameManipulator.setGameOutput(0.5);
-
     // Clear sensors
-    GameManipulator.sensors[0].lastComputeSpeed = 0;
-    GameManipulator.sensors[0].lastSpeeds = [];
-    GameManipulator.sensors[0].lastValue = 1;
-    GameManipulator.sensors[0].value = 1;
-    GameManipulator.sensors[0].speed = 0;
-    GameManipulator.sensors[0].size = 0;
+
+    for (var k in GameManipulator.sensors) {
+
+          GameManipulator.sensors[k].lastComputeSpeed = 0;
+          GameManipulator.sensors[k].lastSpeeds = [];
+          GameManipulator.sensors[k].lastValue = 1;
+          GameManipulator.sensors[k].value = 1;
+          GameManipulator.sensors[k].speed = 0;
+          GameManipulator.sensors[k].size = 0;
+
+      }
+
 
     // Clar Output flags
     GameManipulator.lastOutputSet = 'NONE';
@@ -265,7 +323,7 @@ GameManipulator.computePoints = function () {
 //   They have a starting point,
 //   and a limit to search for.
 //
-// Each sensor can gatter data about
+// Each sensor can gather data about
 // the DISTANCE of the object, it's
 // SIZE and it's speed
 //
@@ -274,16 +332,26 @@ GameManipulator.readSensors = function () {
   var offset = GameManipulator.offset;
 
   var startTime = Date.now();
+  // var extra=200;       Note  : this was for adding the offset to the 4th sensor.
 
   for (var k in GameManipulator.sensors) {
 
+    // console.log(k+"this sensor is running ...")
     var sensor = GameManipulator.sensors[k];
-
+    var start;
     // Calculate absolute position of ray tracing
-    var start = [
+    // if(k==3){
+    //   start = [
+    //     offset[0] + sensor.offset[0]+extra,
+    //     offset[1] + sensor.offset[1],
+    //   ];
+    // }else{
+    start = [
       offset[0] + sensor.offset[0],
       offset[1] + sensor.offset[1],
     ];
+  // }
+
 
     // Compute cursor forwarding
     var forward = sensor.value * GameManipulator.width * 0.8 * sensor.length;
@@ -301,11 +369,17 @@ GameManipulator.readSensors = function () {
         // Iteration limit
         (GameManipulator.width * sensor.length) / sensor.step[0]);
 
+
+
     // Save lastValue
     sensor.lastValue = sensor.value;
 
+
+
     // Calculate the Sensor value
     if (end) {
+
+
       sensor.value = (end[0] - start[0]) / (GameManipulator.width * sensor.length);
 
       // Calculate size of obstacle
@@ -317,7 +391,11 @@ GameManipulator.readSensors = function () {
         75 / 2
       );
 
-      // If no end point, set the start point as end
+      // if(k==1 && endPoint){
+      //   extra = endPoint[0]+2;
+      // }
+
+      // If no end point  , set the start point as end
       if (!endPoint) {
         endPoint = end;
       }
@@ -348,7 +426,7 @@ GameManipulator.readSensors = function () {
     if (sensor.value < sensor.lastValue) {
       // Compute speed
       var newSpeed = (sensor.lastValue - sensor.value) / dt;
-
+      // console.log(k+"th sensor new speed "+ newSpeed);
       sensor.lastSpeeds.unshift(newSpeed);
 
       while (sensor.lastSpeeds.length > 10) {
@@ -369,6 +447,11 @@ GameManipulator.readSensors = function () {
     sensor.size = Math.min(sensor.size, 1.0);
 
     startTime = Date.now();
+
+
+
+
+
   }
 
   // Compute points
@@ -427,7 +510,7 @@ GameManipulator.setGameOutput = function (output){
 
 
 //
-// Simply maps an real number to string actions
+// Simply maps an real number to string actionsf
 //
 GameManipulator.getDiscreteState = function (value){
   if (value < 0.45) {
@@ -444,6 +527,7 @@ GameManipulator.getDiscreteState = function (value){
 // to make sure game is focused
 GameManipulator.focusGame = function (){
   robot.moveMouse(GameManipulator.offset[0], GameManipulator.offset[1]);
+  console.log("MOUSE CLIKC"+GameManipulator.offset[0]+", "+GameManipulator.offset[1]);
   robot.mouseClick('left');
 }
 

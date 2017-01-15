@@ -16,7 +16,7 @@ var savegame = function(){
   var dir = './genomes';
   var fileName = dir + '/gen_'+UI.learner.generation+'_'+Date.now()+'.json';
   fs.writeFile(fileName, JSON.stringify(jsonGenomes), function (err){
-    if (err) {
+    if (err){
       UI.logger.log('Failed to save! '+err);
     } else {
       UI.logger.log('Saved to '+fileName);
@@ -44,7 +44,7 @@ UI.init = function (gameManipulator, learner) {
   UI.uiSensors = UI.grid.set(0, 0, 3, 6, contrib.bar, {
     label: 'Network Inputs',
     // bg: 'white',
-    barWidth: 12,
+    barWidth: 4,
     barSpacing: 1,
     xOffset: 0,
     maxHeight: 100,
@@ -171,11 +171,17 @@ UI.render = function () {
 
   // Update data
   UI.uiSensors.setData({
-    titles: ['Distance', 'Size', 'Speed', 'Activation'],
+    titles: ['Distance', 'Size', 'Speed','Distance 1', 'Size 1', 'Speed 1','Distance 2', 'Size 2', 'Speed 2','Activation'],
     data: [
       Math.round(UI.gm.sensors[0].value * 100),
       Math.round(UI.gm.sensors[0].size * 100),
       Math.round(UI.gm.sensors[0].speed * 100),
+      Math.round(UI.gm.sensors[1].value * 100),
+      Math.round(UI.gm.sensors[1].size * 100),
+      Math.round(UI.gm.sensors[1].speed * 100),
+      Math.round(UI.gm.sensors[2].value * 100),
+      Math.round(UI.gm.sensors[2].size * 100),
+      Math.round(UI.gm.sensors[2].speed * 100),
       Math.round(UI.gm.gameOutput * 100),
     ]
   })
