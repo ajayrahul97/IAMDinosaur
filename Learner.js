@@ -44,7 +44,7 @@ Learn.startLearning = function () {
 
   // Build genomes if needed
   while (Learn.genomes.length < Learn.genomeUnits) { //we are building genomes.
-    Learn.genomes.push(Learn.buildGenome(9, 1));  // 9is the no of i/p , 1 is the no of o/p  //Note:  we are adding 6 more sensors
+    Learn.genomes.push(Learn.buildGenome(7, 3));  // 7 is the no of i/p , 1 is the no of o/p  //Note:  we are adding 6 more sensors
   }
 
   Learn.executeGeneration();
@@ -157,16 +157,15 @@ Learn.executeGenome = function (genome, next){
         Learn.gm.sensors[0].speed,
         Learn.gm.sensors[1].value,    // NOTE : added 6 more sensors..
         Learn.gm.sensors[1].size,
-        Learn.gm.sensors[1].speed,
         Learn.gm.sensors[2].value,
         Learn.gm.sensors[2].size,
-        Learn.gm.sensors[2].speed,
+
       ];
       // console.log(inputs);
       // Apply to network
       var outputs = genome.activate(inputs);
 
-      Learn.gm.setGameOutput(outputs[0]);
+      Learn.gm.setGameOutput(outputs);
     }
 
     // Wait game end, and compute fitness

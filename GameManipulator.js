@@ -37,7 +37,7 @@ var GameManipulator = {
       lastValue: 1,
 
       value: null,
-      offset: [69,-15], // 64,-15
+      offset: [78,-6], // 64,-15
       step: [4, 0],
       length: 0.3,
 
@@ -125,7 +125,6 @@ GameManipulator.findGamePosition = function () {
       break;
     }
   }
-  robot.moveMouse(dinoPos[0],dinoPos[1]);
 
 
   if (!dinoPos) {
@@ -197,11 +196,13 @@ GameManipulator.readGameState = function () {
 
     [2, 0], COLOR_DINOSAUR, false, 20);
 
+  var defaultsens =[0.5,0.5,0.5];
+
   if (found && GameManipulator.gamestate != 'OVER') {
     GameManipulator.gamestate = 'OVER';
 
     // Clear keys
-    GameManipulator.setGameOutput(0.5);
+    GameManipulator.setGameOutput(defaultsens);
 
     // Trigger callback and clear
     GameManipulator.onGameEnd && GameManipulator.onGameEnd(GameManipulator.points);
@@ -217,7 +218,8 @@ GameManipulator.readGameState = function () {
     GameManipulator.lastScore = 0;
 
     // Clear keys
-    GameManipulator.setGameOutput(0.5);
+
+    GameManipulator.setGameOutput(defaultsens);
     // Clear sensors
 
     for (var k in GameManipulator.sensors) {
@@ -230,7 +232,6 @@ GameManipulator.readGameState = function () {
           GameManipulator.sensors[k].size = 0;
 
       }
-
 
     // Clar Output flags
     GameManipulator.lastOutputSet = 'NONE';
@@ -305,14 +306,62 @@ GameManipulator.reloadPage = function ()
 // Basicaly, checks if an object has
 // passed trough the sensor and the
 // value is now higher than before
+// GameManipulator.computePoints = function () {
+//   for (var k in GameManipulator.sensors) {
+//     var sensor = GameManipulator.sensors[k];
+//
+//     if (sensor.value > 0.5 && sensor.lastValue < 0.3) {
+//       GameManipulator.points++;
+//       // console.log('POINTS: '+GameManipulator.points);
+//     }
+//   }
+// }
+//Checks whether it is inverted (Night)
+GameManipulator.isInverted = function (){
+  //Checking if GameManipulator.offset exists
+  if(GameManipulator.offset){
+    if(robot.getPixelColor(GameManipulator.offset[0]+1,GameManipulator.offset[1]+1) == '000000')
+      return true;
+    else
+      return false;
+  }
+  //If GameManipulator.offset does not exist, then game is played for first time, and so not inverted
+  return false;
+}
+
+//Returns the color of the dinosaur
+GameManipulator.getDinoColor = function(){
+  if(GameManipulator.isInverted())
+    return COLOR_DINOSAUR_INVERTED;
+  else
+    return COLOR_DINOSAUR;
+}
+
 GameManipulator.computePoints = function () {
   for (var k in GameManipulator.sensors) {
     var sensor = GameManipulator.sensors[k];
 
+    //Checking whether dinosaur successfully jumps over a cactus
     if (sensor.value > 0.5 && sensor.lastValue < 0.3) {
-      GameManipulator.points++;
+      //Dinosaur may jump over a cactus and collide with it when it is falling down
+      //The condition (sensor.value > 0.5 && sensor.lastValue < 0.3) will be true for the above case also
+      //To make sure a successful jump is achieved, this code checks whether cactus has crossed the game screen
+      //If cactus has crossed the screen, then the jump is successful, and points is incremented
+      var time = Date.now();
+      while(Date.now() - time < 400){
+        if(robot.getPixelColor(GameManipulator.offset[0]+5,GameManipulator.offset[1]+5) == GameManipulator.getDinoColor()){
+          GameManipulator.points++;
+          break;
+        }
+      }
       // console.log('POINTS: '+GameManipulator.points);
     }
+  }
+  //In case of a large cactus, both sensor[0] and sensor[1] will satisfy the above condition. So, points is incremented twice.
+  //This code removes this extra point
+  if(GameManipulator.sensors[0].value > 0.5 && GameManipulator.sensors[0].lastValue < 0.3
+    && GameManipulator.sensors[1].value > 0.5 && GameManipulator.sensors[1].lastValue < 0.3){
+    GameManipulator.points--;
   }
 }
 
@@ -475,8 +524,10 @@ GameManipulator.lastOutputSetTime = 0;
 
 GameManipulator.setGameOutput = function (output){
 
-  GameManipulator.gameOutput = output;
+  GameManipulator.gameOutput = (output[0]+output[1]+output[2])/3;
+
   GameManipulator.gameOutputString = GameManipulator.getDiscreteState(output);
+  // console.log(GameManipulator.gameOutputString+"--->STATE");
 
   if (GameManipulator.gameOutputString == 'DOWN') {
     // Skew
@@ -487,21 +538,34 @@ GameManipulator.setGameOutput = function (output){
     robot.keyToggle('up', RELEASE);
     robot.keyToggle('down', RELEASE);
   } else {
+    // robot.keyToggle('down', RELEASE);
+    robot.keyTap('up');
 
-    // Filter JUMP
-    if (GameManipulator.lastOutputSet != 'JUMP') {
-      GameManipulator.lastOutputSetTime = Date.now();
-    }
 
-    // JUMP
-    // Check if hasn't jump for more than 3 continuous secconds
-    if (Date.now() - GameManipulator.lastOutputSetTime < 3000) {
-      robot.keyToggle('up', PRESS);
-      robot.keyToggle('down', RELEASE);
-    } else {
-      robot.keyToggle('up', RELEASE);
-      robot.keyToggle('down', RELEASE);
-    }
+    // var currenttime = Date.now();
+    //
+    // while(Date.now()-currenttime <200){
+    //   robot.keyToggle('up', PRESS);
+    //   robot.keyToggle('down', RELEASE);
+    // }
+    //
+    // robot.keyToggle('up', RELEASE);
+    // robot.keyToggle('down', RELEASE);
+
+    // // Filter JUMP
+    // if (GameManipulator.lastOutputSet != 'JUMP') {
+    //   GameManipulator.lastOutputSetTime = Date.now();
+    // }
+    //
+    // // JUMP
+    // // Check if hasn't jump for more than 3 continuous secconds
+    // if (Date.now() - GameManipulator.lastOutputSetTime < 3000) {
+    //   robot.keyToggle('up', PRESS);
+    //   robot.keyToggle('down', RELEASE);
+    // } else {
+    //   robot.keyToggle('up', RELEASE);
+    //   robot.keyToggle('down', RELEASE);
+    // }
 
   }
 
@@ -511,16 +575,45 @@ GameManipulator.setGameOutput = function (output){
 
 //
 // Simply maps an real number to string actionsf
+// //
+// GameManipulator.getStatenumber = function(value){
+//   if (value < 0.45) {
+//     return 0
+//   } else if(value > 0.55) {
+//     return 1
+//   }
 //
-GameManipulator.getDiscreteState = function (value){
-  if (value < 0.45) {
-    return 'DOWN'
-  } else if(value > 0.55) {
-    return 'JUMP';
-  }
+//   return 0
+// }
 
-  return 'NORM';
+GameManipulator.getDiscreteState = function(value){
+
+  // console.log("values "+value[0]+" "+value[1]+" "+value[2]);
+  if(value[0]<0.5 && value[1]<0.5 && value[2]>0.5){
+    return 'DOWN'
+  } else if (value[0]<0.5 && value[1]>0.5 && value[2]>0.5) {
+    return 'DOWN'
+
+  }else if (value[0]>0.5 && value[1]<0.5 && value[2]<0.5) {
+    return 'JUMP'
+
+  }else if (value[0]>0.5 && value[1]>0.5 && value[2] <0.5) {
+    return 'JUMP';
+
+  }else {
+    return 'NORM';
+
+  }
 }
+// GameManipulator.getDiscreteState = function (value){
+//   if (value < 0.45) {
+//     return 'DOWN'
+//   } else if(value > 0.55) {
+//     return 'JUMP';
+//   }
+//
+//   return 'NORM';
+// }
 
 
 // Click on the Starting point
